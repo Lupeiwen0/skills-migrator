@@ -24,17 +24,38 @@ describe("prompts", () => {
   it("returns all agents in --yes mode", async () => {
     const { prompts, mocks } = await loadPrompts({});
 
-    await expect(prompts.selectTargetAgents(true)).resolves.toEqual(["codex", "claude-code", "opencode", "cursor"]);
+    await expect(prompts.selectTargetAgents(true)).resolves.toEqual([
+      "codex",
+      "claude-code",
+      "opencode",
+      "cursor",
+      "kiro",
+      "windsurf",
+      "trae",
+      "qoder",
+      "antigravity",
+    ]);
     expect(mocks.multiselect).not.toHaveBeenCalled();
   });
 
-  it("uses multiselect when agents are not specified", async () => {
+  it("uses an empty default when no project agents were detected", async () => {
     const { prompts, mocks } = await loadPrompts({ multiselect: ["claude-code", "cursor"] });
 
     await expect(prompts.selectTargetAgents(false)).resolves.toEqual(["claude-code", "cursor"]);
     expect(mocks.multiselect).toHaveBeenCalledWith(
       expect.objectContaining({
         initialValues: [],
+      }),
+    );
+  });
+
+  it("defaults detected project agents in the multiselect", async () => {
+    const { prompts, mocks } = await loadPrompts({ multiselect: ["claude-code", "cursor"] });
+
+    await expect(prompts.selectTargetAgents(false, ["claude-code"])).resolves.toEqual(["claude-code", "cursor"]);
+    expect(mocks.multiselect).toHaveBeenCalledWith(
+      expect.objectContaining({
+        initialValues: ["claude-code"],
       }),
     );
   });

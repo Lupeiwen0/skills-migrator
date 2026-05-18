@@ -9,7 +9,7 @@ export async function safeLstat(filePath: string) {
   try {
     return await lstat(filePath);
   } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+    if (error instanceof Error && "code" in error && (error.code === "ENOENT" || error.code === "ENOTDIR")) {
       return undefined;
     }
 

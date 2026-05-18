@@ -1,7 +1,13 @@
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { AGENTS, getCanonicalDir, parseAgentId, resolveAgents } from "./agents.js";
+import {
+  detectProjectAgents,
+  getCanonicalDir,
+  parseAgentId,
+  resolveAgents,
+  resolveProjectScanAgents,
+} from "./agents.js";
 import { applyMigrationPlan } from "./apply.js";
 import { createMigrationPlan } from "./planner.js";
 import { confirmApplyPlan, selectLinkStrategy, selectTargetAgents } from "./prompts.js";
@@ -67,24 +73,37 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
   const cwd = process.cwd();
   const homeDir = os.homedir();
   const canonicalDir = getCanonicalDir({ cwd, homeDir, global: options.global });
+  const detectedProjectAgents = options.global ? [] : await detectProjectAgents({ cwd });
   const selectedAgents =
-    options.selectedAgents.length > 0 ? options.selectedAgents : await selectTargetAgents(options.yes);
+    options.selectedAgents.length > 0
+      ? options.selectedAgents
+      : await selectTargetAgents(options.yes, detectedProjectAgents);
 
   if (selectedAgents.length === 0) {
     console.log("Migration cancelled.");
     return;
   }
 
-  const agents = resolveAgents({
+  const targetAgents = resolveAgents({
     cwd,
     homeDir,
     env: process.env,
     global: options.global,
     selectedAgents,
   });
+  const sourceAgentIds = uniqueAgentIds([...detectedProjectAgents, ...selectedAgents]);
+  const sourceAgents = options.global
+    ? targetAgents
+    : resolveProjectScanAgents({
+        cwd,
+        homeDir,
+        env: process.env,
+        global: options.global,
+        selectedAgents: sourceAgentIds,
+      });
   const scan = addDesiredAgentTargets(
-    await scanAgentSkills(withCanonicalScanAgents(agents, { cwd, homeDir, global: options.global })),
-    agents,
+    await scanAgentSkills(withCanonicalScanAgents(sourceAgents, { cwd, homeDir, global: options.global })),
+    targetAgents,
   );
   const plan = await createMigrationPlan(scan, { canonicalDir, yes: options.yes });
 
@@ -122,20 +141,38 @@ function withCanonicalScanAgents(
   agents: ResolvedAgent[],
   options: { cwd: string; homeDir: string; global: boolean },
 ): ResolvedAgent[] {
-  const canonicalAgents = resolveAgents({
-    cwd: options.cwd,
-    homeDir: options.homeDir,
-    env: process.env,
-    global: options.global,
-    selectedAgents: AGENTS.filter((agent) => (options.global ? false : agent.projectCanonical)).map((agent) => agent.id),
-  });
+  const canonicalAgents: ResolvedAgent[] = [
+    {
+      id: "codex",
+      label: "Canonical",
+      skillsDir: getCanonicalDir(options),
+      isCanonical: true,
+    },
+  ];
   const byKey = new Map<string, ResolvedAgent>();
 
   for (const agent of [...canonicalAgents, ...agents]) {
-    byKey.set(`${agent.id}:${agent.skillsDir}`, agent);
+    const key = agent.isCanonical ? `canonical:${agent.skillsDir}` : `${agent.id}:${agent.skillsDir}`;
+    byKey.set(key, agent);
   }
 
   return [...byKey.values()];
+}
+
+function uniqueAgentIds(agentIds: AgentId[]): AgentId[] {
+  const seen = new Set<AgentId>();
+  const unique: AgentId[] = [];
+
+  for (const agentId of agentIds) {
+    if (seen.has(agentId)) {
+      continue;
+    }
+
+    seen.add(agentId);
+    unique.push(agentId);
+  }
+
+  return unique;
 }
 
 function addDesiredAgentTargets(scan: ScanResult, agents: ResolvedAgent[]): ScanResult {

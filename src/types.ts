@@ -1,4 +1,13 @@
-export type AgentId = "codex" | "claude-code" | "opencode" | "cursor";
+export type AgentId =
+  | "codex"
+  | "claude-code"
+  | "opencode"
+  | "cursor"
+  | "kiro"
+  | "windsurf"
+  | "trae"
+  | "qoder"
+  | "antigravity";
 
 export type LinkStrategy = "symlink-copy-fallback" | "symlink" | "copy";
 
@@ -6,6 +15,8 @@ export interface AgentDefinition {
   id: AgentId;
   label: string;
   projectSkillsDir: string;
+  projectScanDirs?: string[];
+  projectConfigDirs: string[];
   globalSkillsDir: (env: NodeJS.ProcessEnv, homeDir: string) => string;
   projectCanonical: boolean;
 }

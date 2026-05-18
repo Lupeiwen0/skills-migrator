@@ -19,17 +19,17 @@ export async function confirmApplyPlan(yes: boolean): Promise<boolean> {
   return Boolean(answer);
 }
 
-export async function selectTargetAgents(yes: boolean): Promise<AgentId[]> {
+export async function selectTargetAgents(yes: boolean, defaultAgentIds: AgentId[] = []): Promise<AgentId[]> {
   const allAgentIds = AGENTS.map((agent) => agent.id);
 
   if (yes) {
-    return allAgentIds;
+    return defaultAgentIds.length > 0 ? defaultAgentIds : allAgentIds;
   }
 
   const answer = await multiselect<AgentId>({
     message: "Select target agent platforms",
     options: AGENTS.map((agent) => ({ value: agent.id, label: agent.label })),
-    initialValues: [],
+    initialValues: defaultAgentIds,
     required: true,
   });
 

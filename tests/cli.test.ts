@@ -36,6 +36,12 @@ describe("cli", () => {
     await writeFile(path.join(skillDir, "SKILL.md"), "foo");
   }
 
+  async function makeSkillAt(relativePath: string, content: string) {
+    const skillDir = path.join(tmpDir, relativePath);
+    await mkdir(skillDir, { recursive: true });
+    await writeFile(path.join(skillDir, "SKILL.md"), content);
+  }
+
   async function runCli(
     args: string[],
     prompts: {
@@ -71,10 +77,40 @@ describe("cli", () => {
 
     const { stdout, selectTargetAgents } = await runCli(["migrate", "--dry-run"]);
 
-    expect(selectTargetAgents).toHaveBeenCalledWith(false);
+    expect(selectTargetAgents).toHaveBeenCalledWith(false, ["claude-code"]);
     expect(stdout).toContain("Migration plan");
     expect(stdout).toContain("foo: migrate");
     await expect(readFile(path.join(tmpDir, ".agents", "skills", "foo", "SKILL.md"), "utf8")).rejects.toThrow();
+  });
+
+  it("migrates discovered project agent skills before extension target selection", async () => {
+    await makeSkillAt(path.join(".claude", "skills", "claude-only"), "claude");
+    await makeSkillAt(path.join(".cursor", "skills", "cursor-only"), "cursor");
+    await makeSkillAt(path.join(".kiro", "skills", "kiro-only"), "kiro");
+    await makeSkillAt(path.join(".windsurf", "skills", "windsurf-only"), "windsurf");
+    await makeSkillAt(path.join(".trae", "skills", "trae-only"), "trae");
+    await makeSkillAt(path.join(".qoder", "skills", "qoder-only"), "qoder");
+    await mkdir(path.join(tmpDir, ".gemini", "antigravity"), { recursive: true });
+
+    const { stdout, selectTargetAgents } = await runCli(["migrate", "--dry-run"], {
+      selectedAgents: ["claude-code"],
+    });
+
+    expect(selectTargetAgents).toHaveBeenCalledWith(false, [
+      "claude-code",
+      "cursor",
+      "kiro",
+      "windsurf",
+      "trae",
+      "qoder",
+      "antigravity",
+    ]);
+    expect(stdout).toContain("claude-only: migrate");
+    expect(stdout).toContain("cursor-only: migrate");
+    expect(stdout).toContain("kiro-only: migrate");
+    expect(stdout).toContain("windsurf-only: migrate");
+    expect(stdout).toContain("trae-only: migrate");
+    expect(stdout).toContain("qoder-only: migrate");
   });
 
   it("does not prompt for target agents when --agent is provided", async () => {
@@ -100,7 +136,7 @@ describe("cli", () => {
 
     const { stdout, selectTargetAgents, selectLinkStrategy } = await runCli(["migrate", "--yes"]);
 
-    expect(selectTargetAgents).toHaveBeenCalledWith(true);
+    expect(selectTargetAgents).toHaveBeenCalledWith(true, ["claude-code"]);
     expect(selectLinkStrategy).toHaveBeenCalledWith(true);
     expect(stdout).toContain("Migrated: 1");
     expect(await readFile(path.join(tmpDir, ".agents", "skills", "foo", "SKILL.md"), "utf8")).toBe("foo");
