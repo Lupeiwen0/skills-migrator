@@ -1,6 +1,6 @@
 {
   "name": "skills-migrator",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "CLI for migrating AI agent skills into .agents/skills and linking them across agent platforms.",
   "private": false,
   "type": "module",
