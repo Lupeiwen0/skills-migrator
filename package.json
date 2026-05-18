@@ -1,0 +1,33 @@
+{
+  "name": "skills-migrator",
+  "version": "0.1.1",
+  "private": false,
+  "type": "module",
+  "bin": {
+    "skills-migrator": "./bin/cli.mjs"
+  },
+  "files": [
+    "bin",
+    "dist/src",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.10.1",
+    "picocolors": "^1.1.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.21",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3",
+    "vitest": "^3.1.4"
+  }
+}
