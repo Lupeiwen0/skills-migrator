@@ -2,6 +2,8 @@
 
 Migrate existing agent skills into a shared canonical directory and reconnect agent-specific entries with symlinks or copies.
 
+[中文文档](README.zh-CN.md)
+
 ## MVP
 
 Supported agents:

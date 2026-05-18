@@ -1,6 +1,7 @@
 {
   "name": "skills-migrator",
   "version": "0.1.2",
+  "description": "CLI for migrating AI agent skills into .agents/skills and linking them across agent platforms.",
   "private": false,
   "type": "module",
   "bin": {
@@ -9,8 +10,37 @@
   "files": [
     "bin",
     "dist/src",
-    "README.md"
+    "docs/development-manual.md",
+    "README.md",
+    "README.zh-CN.md"
   ],
+  "keywords": [
+    "ai",
+    "agent",
+    "agents",
+    "skills",
+    "cli",
+    "migration",
+    "migrator",
+    "symlink",
+    "codex",
+    "claude-code",
+    "opencode",
+    "cursor",
+    "kiro",
+    "windsurf",
+    "trae",
+    "qoder",
+    "antigravity"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lupeiwen0/skills-migrator.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Lupeiwen0/skills-migrator/issues"
+  },
+  "homepage": "https://github.com/Lupeiwen0/skills-migrator#readme",
   "engines": {
     "node": ">=18"
   },
