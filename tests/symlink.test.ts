@@ -89,7 +89,7 @@ describe("symlink", () => {
     await expect(realpath(linkPath)).resolves.toBe(await realpath(target));
   });
 
-  it("uses the same relative target text for Windows junction creation as Vercel Labs", async () => {
+  it("uses an absolute target for Windows junction creation", async () => {
     vi.spyOn(os, "platform").mockReturnValue("win32");
     const target = path.join(tmpDir, ".agents", "skills", "foo");
     const linkPath = path.join(tmpDir, ".claude", "skills", "foo");
@@ -98,7 +98,32 @@ describe("symlink", () => {
     const result = await createRelativeSymlink(target, linkPath);
 
     expect(result).toEqual({ status: "created" });
-    expect(await readlink(linkPath)).toBe("../../.agents/skills/foo");
+    // Junctions store an absolute path. Node resolves a relative target against
+    // CWD, not the link's parent, so the symlink call must pass the absolute
+    // target itself — not just any absolute path.
+    expect(await readlink(linkPath)).toBe(target);
+    await expect(realpath(linkPath)).resolves.toBe(await realpath(target));
+  });
+
+  it("resolves logical target for Windows junction when canonical parent is a symlink", async () => {
+    vi.spyOn(os, "platform").mockReturnValue("win32");
+    const backingAgents = path.join(tmpDir, "backing", "agents");
+    const logicalAgents = path.join(tmpDir, ".agents");
+    const target = path.join(logicalAgents, "skills", "foo");
+    const linkPath = path.join(tmpDir, ".claude", "skills", "foo");
+    await mkdir(path.join(backingAgents, "skills", "foo"), { recursive: true });
+    await symlinkDir(backingAgents, logicalAgents);
+
+    const result = await createRelativeSymlink(target, linkPath);
+
+    expect(result).toEqual({ status: "created" });
+    // Junction must store the *logical* absolute path (target) — not the
+    // *real* absolute path (which would follow the parent symlink to the
+    // backing dir). Both have the same realpath, so we have to compare the
+    // stored text directly.
+    const stored = await readlink(linkPath);
+    expect(stored).toBe(target);
+    expect(stored).not.toBe(await realpath(target));
     await expect(realpath(linkPath)).resolves.toBe(await realpath(target));
   });
 

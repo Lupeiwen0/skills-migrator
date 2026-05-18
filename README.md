@@ -73,7 +73,7 @@ npx skills-migrator migrate --yes
 ## Safety
 
 - Conflicts default to `Skip`.
-- `--yes` accepts detected project platforms when present, otherwise selects all platforms. It uses the recommended symlink-with-copy-fallback strategy, skips conflicts, and reports them.
+- `--yes` accepts detected project platforms. If no project agent directories are detected and no `--agent` flag is provided, the CLI exits with an error rather than silently selecting every supported platform. It uses the recommended symlink-with-copy-fallback strategy, skips conflicts, and reports them.
 - Source skills are moved into `.agents/.tmp/backups/<timestamp>/...` after migration so the original agent directory does not keep `.backup-*` entries.
 - The report prints recovery backup paths after migration.
 - Symlink creation follows the Vercel Labs filesystem symlink pattern: relative links, parent symlink awareness, same-realpath checks, and Windows junction support. If the recommended strategy is used and symlink creation fails, the CLI falls back to copying.

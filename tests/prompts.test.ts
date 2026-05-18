@@ -21,20 +21,20 @@ describe("prompts", () => {
     return { prompts, mocks: { confirm, multiselect, select } };
   }
 
-  it("returns all agents in --yes mode", async () => {
+  it("returns detected agents in --yes mode", async () => {
     const { prompts, mocks } = await loadPrompts({});
 
-    await expect(prompts.selectTargetAgents(true)).resolves.toEqual([
-      "codex",
+    await expect(prompts.selectTargetAgents(true, ["claude-code", "cursor"])).resolves.toEqual([
       "claude-code",
-      "opencode",
       "cursor",
-      "kiro",
-      "windsurf",
-      "trae",
-      "qoder",
-      "antigravity",
     ]);
+    expect(mocks.multiselect).not.toHaveBeenCalled();
+  });
+
+  it("throws in --yes mode when no agents are detected and none provided", async () => {
+    const { prompts, mocks } = await loadPrompts({});
+
+    await expect(prompts.selectTargetAgents(true)).rejects.toThrow(/--yes requires at least one detected agent/);
     expect(mocks.multiselect).not.toHaveBeenCalled();
   });
 

@@ -1,6 +1,6 @@
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { randomBytes } from "node:crypto";
 import {
   detectProjectAgents,
   getCanonicalDir,
@@ -52,7 +52,7 @@ function parseArgs(argv: string[]): CliOptions {
 function timestamp(): string {
   const now = new Date();
   const pad = (value: number) => String(value).padStart(2, "0");
-  return [
+  const date = [
     now.getFullYear(),
     pad(now.getMonth() + 1),
     pad(now.getDate()),
@@ -60,11 +60,14 @@ function timestamp(): string {
     pad(now.getMinutes()),
     pad(now.getSeconds()),
   ].join("");
+  // Append 4 random hex chars so two runs in the same second don't collide
+  // and clobber each other's recovery backups.
+  return `${date}-${randomBytes(2).toString("hex")}`;
 }
 
 export async function main(argv = process.argv.slice(2)): Promise<void> {
   if (argv[0] !== "migrate") {
-    console.error("Usage: agent-skills-migrator migrate [--global] [--dry-run] [--yes] [--agent <id>]");
+    console.error("Usage: skills-migrator migrate [--global] [--dry-run] [--yes] [--agent <id>]");
     process.exitCode = 1;
     return;
   }
@@ -74,6 +77,13 @@ export async function main(argv = process.argv.slice(2)): Promise<void> {
   const homeDir = os.homedir();
   const canonicalDir = getCanonicalDir({ cwd, homeDir, global: options.global });
   const detectedProjectAgents = options.global ? [] : await detectProjectAgents({ cwd });
+  if (options.yes && options.selectedAgents.length === 0 && detectedProjectAgents.length === 0) {
+    throw new Error(
+      options.global
+        ? "--yes --global requires an explicit --agent <id> (global mode does not auto-detect agents)."
+        : "--yes requires a detected project agent or an explicit --agent <id>. No project agent directories were found.",
+    );
+  }
   const selectedAgents =
     options.selectedAgents.length > 0
       ? options.selectedAgents
@@ -199,11 +209,4 @@ function addDesiredAgentTargets(scan: ScanResult, agents: ResolvedAgent[]): Scan
   }
 
   return { ...scan, skills: [...scan.skills, ...desiredSkills] };
-}
-
-if (fileURLToPath(import.meta.url) === path.resolve(process.argv[1] ?? "")) {
-  main().catch((error: unknown) => {
-    console.error(error instanceof Error ? error.message : String(error));
-    process.exitCode = 1;
-  });
 }

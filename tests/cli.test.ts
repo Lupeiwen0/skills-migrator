@@ -153,4 +153,16 @@ describe("cli", () => {
     expect((await lstat(claudeSkill)).isSymbolicLink()).toBe(true);
     await expect(realpath(claudeSkill)).resolves.toBe(await realpath(canonicalSkill));
   });
+
+  it("--yes without detected agents or --agent in project mode throws a project-mode error", async () => {
+    await expect(runCli(["migrate", "--yes"])).rejects.toThrow(
+      /--yes requires a detected project agent or an explicit --agent/,
+    );
+  });
+
+  it("--global --yes without --agent throws a global-mode error", async () => {
+    await expect(runCli(["migrate", "--global", "--yes"])).rejects.toThrow(
+      /--yes --global requires an explicit --agent/,
+    );
+  });
 });

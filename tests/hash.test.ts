@@ -57,8 +57,22 @@ describe("hash", () => {
     await mkdir(path.join(noisy, ".tmp"));
     await writeFile(path.join(noisy, ".tmp", "scratch.txt"), "temporary work\n");
     await writeFile(path.join(noisy, "foo.backup-20260518120000"), "generated backup\n");
+    await writeFile(path.join(noisy, "bar.backup-20260518120000-a1b2"), "generated backup with random suffix\n");
 
     await expect(skillsHaveSameContent(clean, noisy)).resolves.toBe(true);
+  });
+
+  it("does not ignore backup-like names with wrong-length random suffix", async () => {
+    const clean = path.join(tmpDir, "clean");
+    const noisy = path.join(tmpDir, "noisy");
+    await mkdir(clean);
+    await mkdir(noisy);
+    await writeFile(path.join(clean, "SKILL.md"), "# Skill\n");
+    await writeFile(path.join(noisy, "SKILL.md"), "# Skill\n");
+    // 5-char suffix is not a stamp produced by the CLI, so it must count.
+    await writeFile(path.join(noisy, "foo.backup-20260518120000-abcde"), "not a stamp\n");
+
+    await expect(skillsHaveSameContent(clean, noisy)).resolves.toBe(false);
   });
 
   it("detects different content", async () => {

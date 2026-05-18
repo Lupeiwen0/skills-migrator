@@ -4,7 +4,8 @@ export function formatPlanReport(plan: MigrationPlan): string {
   const lines = ["Migration plan", `Canonical: ${plan.canonicalDir}`];
 
   for (const action of plan.actions) {
-    lines.push(`${action.skillName}: ${action.kind} (${action.source.agentId})`);
+    const reason = action.reason ? ` — ${action.reason}` : "";
+    lines.push(`${action.skillName}: ${action.kind} (${action.source.agentId})${reason}`);
   }
 
   if (plan.warnings.length > 0) {

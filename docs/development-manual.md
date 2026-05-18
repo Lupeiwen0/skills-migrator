@@ -36,7 +36,7 @@ Project mode:
 2. Select extension targets:
    - `--agent <id>` bypasses the prompt.
    - interactive mode defaults detected project agents.
-   - `--yes` accepts detected project agents; if none are detected, it selects all supported agents.
+   - `--yes` accepts detected project agents; if none are detected and no `--agent` is provided, the CLI exits with an error rather than silently selecting every supported platform.
 3. Resolve source scan agents from `detected + selected`.
 4. Always include the canonical `.agents/skills` scan source.
 5. Scan only first-level skill directories that contain `SKILL.md`.
@@ -47,7 +47,7 @@ Global mode:
 
 1. Uses `~/.agents/skills` as canonical.
 2. Scans selected global agent skill dirs.
-3. Does not run project directory discovery.
+3. Does not run project directory discovery — `--yes --global` therefore requires an explicit `--agent <id>`.
 
 ## Supported Agents
 
@@ -94,7 +94,6 @@ Use this checklist when extending the registry.
 7. Update README supported agent ids.
 8. Update tests:
    - `tests/agents.test.ts`: project/global paths, parse id, project scan locations, discovery.
-   - `tests/prompts.test.ts`: all-agent `--yes` list.
    - `tests/cli.test.ts`: discovery-first behavior when relevant.
 9. Run `npm run typecheck`, `npm test`, and `npm run build`.
 

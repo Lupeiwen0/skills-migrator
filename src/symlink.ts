@@ -52,8 +52,15 @@ export async function createRelativeSymlink(target: string, linkPath: string): P
       await rm(linkPath, { recursive: true });
     }
   } catch (error) {
-    if (error instanceof Error && "code" in error && error.code === "ELOOP") {
+    if (!(error instanceof Error) || !("code" in error)) {
+      throw error;
+    }
+    if (error.code === "ENOENT") {
+      // Link path doesn't exist yet — fall through to creation.
+    } else if (error.code === "ELOOP") {
       await rm(linkPath, { force: true }).catch(() => undefined);
+    } else {
+      throw error;
     }
   }
 
@@ -62,8 +69,12 @@ export async function createRelativeSymlink(target: string, linkPath: string): P
 
   const realLinkDir = await resolveParentSymlinks(linkParent);
   const relativeTarget = path.relative(realLinkDir, target);
+  const isWindows = os.platform() === "win32";
+  // Junctions on Windows store an absolute path. Node resolves a relative
+  // target against CWD, not the link's parent, so we resolve it ourselves.
+  const symlinkTarget = isWindows ? path.resolve(realLinkDir, relativeTarget) : relativeTarget;
 
-  await symlink(relativeTarget, linkPath, os.platform() === "win32" ? "junction" : undefined);
+  await symlink(symlinkTarget, linkPath, isWindows ? "junction" : undefined);
 
   return { status: "created" };
 }

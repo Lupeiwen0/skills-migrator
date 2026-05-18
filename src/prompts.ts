@@ -20,10 +20,14 @@ export async function confirmApplyPlan(yes: boolean): Promise<boolean> {
 }
 
 export async function selectTargetAgents(yes: boolean, defaultAgentIds: AgentId[] = []): Promise<AgentId[]> {
-  const allAgentIds = AGENTS.map((agent) => agent.id);
-
   if (yes) {
-    return defaultAgentIds.length > 0 ? defaultAgentIds : allAgentIds;
+    if (defaultAgentIds.length === 0) {
+      throw new Error(
+        "--yes requires at least one detected agent or an explicit --agent <id>. " +
+          "No project agent directories were found.",
+      );
+    }
+    return defaultAgentIds;
   }
 
   const answer = await multiselect<AgentId>({

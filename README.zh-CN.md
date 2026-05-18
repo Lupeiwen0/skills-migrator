@@ -132,6 +132,7 @@ SKILL.md
 - 同名但内容不同的 skill 会被标记为 conflict。
 - 交互模式下 conflict 默认跳过。
 - `--yes` 模式下 conflict 会自动跳过并在结果中报告。
+- `--yes` 只会迁移检测到的项目 agent；如果项目中没有检测到任何 agent 目录，且没有提供 `--agent`，CLI 会直接报错退出，而不是默默选中全部 9 个平台。
 - 成功迁移后，原始 source skill 会移动到：
 
 ```text

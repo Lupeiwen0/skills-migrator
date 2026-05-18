@@ -119,7 +119,7 @@ async function collectSymlinkEntry(
 }
 
 function shouldIgnore(relativePath: string, name: string, isDirectory: boolean): boolean {
-  if (/\.backup-\d{14}$/.test(name)) {
+  if (/\.backup-\d{14}(?:-[a-f0-9]{4})?$/.test(name)) {
     return true;
   }
 
